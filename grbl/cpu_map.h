@@ -276,8 +276,8 @@
 #ifdef CPU_MAP_ANET_A8
 
   // Define serial port pins and interrupt vectors.
-  #define SERIAL_RX     USART_RX_vect
-  #define SERIAL_UDRE   USART_UDRE_vect
+  #define SERIAL_RX     USART0_RX_vect
+  #define SERIAL_UDRE   USART0_UDRE_vect
 
   // Define step pulse output pins.
   #define INTERNAL_X_STEP  (1<<2)

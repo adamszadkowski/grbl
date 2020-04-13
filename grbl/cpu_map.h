@@ -320,12 +320,12 @@
 
   // Define homing/hard limit switch input pins and limit interrupt vectors.
   // NOTE: All limit bit pins must be on the same port, but not on a port with other input pins (CONTROL).
-  #define LIMIT_DDR        DDRB
-  #define LIMIT_PIN        PINB
-  #define LIMIT_PORT       PORTB
-  #define X_LIMIT_BIT      1  // Uno Digital Pin 9
-  #define Y_LIMIT_BIT      2  // Uno Digital Pin 10
-  #define Z_LIMIT_BIT      3  // Uno Digital Pin 11
+  #define LIMIT_DDR        DDRC
+  #define LIMIT_PIN        PINC
+  #define LIMIT_PORT       PORTC
+  #define X_LIMIT_BIT      2
+  #define Y_LIMIT_BIT      3
+  #define Z_LIMIT_BIT      4
   #define LIMIT_MASK       ((1<<X_LIMIT_BIT)|(1<<Y_LIMIT_BIT)|(1<<Z_LIMIT_BIT)) // All limit bits
   #define LIMIT_INT        PCIE0  // Pin change interrupt enable pin
   #define LIMIT_INT_vect   PCINT0_vect

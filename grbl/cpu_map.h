@@ -280,34 +280,35 @@
   #define SERIAL_UDRE   USART0_UDRE_vect
 
   // Define step pulse output pins.
-  #define INTERNAL_X_STEP  (1<<2)
-  #define INTERNAL_Y_STEP  (1<<3)
-  #define INTERNAL_Z_STEP  (1<<4)
+  #define INTERNAL_X_STEP  (1<<7)
+  #define INTERNAL_Y_STEP  (1<<6)
+  #define INTERNAL_Z_STEP  (1<<3)
   #define X_STEP_BIT       1  // Dummy unique value
   #define Y_STEP_BIT       2  // Dummy unique value
   #define Z_STEP_BIT       3  // Dummy unique value
   #define STEP_MASK        ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
 
-  #define SET_STEP_DDR()   { SET_SINGLE_DDR(X, D, STEP); SET_SINGLE_DDR(Y, D, STEP); SET_SINGLE_DDR(Z, D, STEP); }
-  #define WRITE_STEP_PORT(val) { WRITE_SINGLE(val, X, D, STEP); WRITE_SINGLE(val, Y, D, STEP); WRITE_SINGLE(val, Z, D, STEP); }
+  #define SET_STEP_DDR()   { SET_SINGLE_DDR(X, D, STEP); SET_SINGLE_DDR(Y, C, STEP); SET_SINGLE_DDR(Z, B, STEP); }
+  #define WRITE_STEP_PORT(val) { WRITE_SINGLE(val, X, D, STEP); WRITE_SINGLE(val, Y, C, STEP); WRITE_SINGLE(val, Z, B, STEP); }
 
   // Define step direction output pins.
   #define INTERNAL_X_DIRECTION  (1<<5)
-  #define INTERNAL_Y_DIRECTION  (1<<6)
-  #define INTERNAL_Z_DIRECTION  (1<<7)
+  #define INTERNAL_Y_DIRECTION  (1<<7)
+  #define INTERNAL_Z_DIRECTION  (1<<2)
   #define X_DIRECTION_BIT       4  // Dummy unique value
   #define Y_DIRECTION_BIT       5  // Dummy unique value
   #define Z_DIRECTION_BIT       6  // Dummy unique value
 
-  #define SET_DIRECTION_DDR() { SET_SINGLE_DDR(X, D, DIRECTION); SET_SINGLE_DDR(Y, D, DIRECTION); SET_SINGLE_DDR(Z, D, DIRECTION); }
-  #define WRITE_DIRECTION_PORT(val) { WRITE_SINGLE(val, X, D, DIRECTION); WRITE_SINGLE(val, Y, D, DIRECTION); WRITE_SINGLE(val, Z, D, DIRECTION); }
+  #define SET_DIRECTION_DDR() { SET_SINGLE_DDR(X, C, DIRECTION); SET_SINGLE_DDR(Y, C, DIRECTION); SET_SINGLE_DDR(Z, B, DIRECTION); }
+  #define WRITE_DIRECTION_PORT(val) { WRITE_SINGLE(val, X, C, DIRECTION); WRITE_SINGLE(val, Y, C, DIRECTION); WRITE_SINGLE(val, Z, B, DIRECTION); }
 
   // Define stepper driver enable/disable output pin.
-  #define INTERNAL_XYZ_ENABLE  (1<<0)
+  #define INTERNAL_XY_ENABLE  (1<<6)
+  #define INTERNAL_Z_ENABLE   (1<<5)
 
-  #define SET_STEPPERS_DISABLE_DDR() { SET_ON(DDRB, INTERNAL_XYZ_ENABLE); }
-  #define WRITE_STEPPERS_DISABLE_PORT_ON() { SET_ON(PORTB, INTERNAL_XYZ_ENABLE); }
-  #define WRITE_STEPPERS_DISABLE_PORT_OFF() { SET_OFF(PORTB, INTERNAL_XYZ_ENABLE); }
+  #define SET_STEPPERS_DISABLE_DDR() { SET_ON(DDRD, INTERNAL_XY_ENABLE); SET_ON(DDRA, INTERNAL_Z_ENABLE); }
+  #define WRITE_STEPPERS_DISABLE_PORT_ON() { SET_ON(PORTD, INTERNAL_XY_ENABLE); SET_ON(PORTA, INTERNAL_Z_ENABLE); }
+  #define WRITE_STEPPERS_DISABLE_PORT_OFF() { SET_OFF(PORTD, INTERNAL_XY_ENABLE); SET_OFF(PORTA, INTERNAL_Z_ENABLE); }
 
   // Define homing/hard limit switch input pins and limit interrupt vectors.
   // NOTE: All limit bit pins must be on the same port, but not on a port with other input pins (CONTROL).

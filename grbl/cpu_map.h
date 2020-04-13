@@ -362,14 +362,13 @@
   #define COOLANT_MIST_BIT   2
 
   // Define spindle enable and spindle direction output pins.
-  #define SPINDLE_ENABLE_DDR    DDRB
-  #define SPINDLE_ENABLE_PORT   PORTB
-  // Z Limit pin and spindle PWM/enable pin swapped to access hardware PWM on Pin 11.
-  #define SPINDLE_ENABLE_BIT    4  // Uno Digital Pin 12
+  #define SPINDLE_ENABLE_DDR    DDRD
+  #define SPINDLE_ENABLE_PORT   PORTD
+  #define SPINDLE_ENABLE_BIT    4
   #ifndef USE_SPINDLE_DIR_AS_ENABLE_PIN
     #define SPINDLE_DIRECTION_DDR   DDRB
     #define SPINDLE_DIRECTION_PORT  PORTB
-    #define SPINDLE_DIRECTION_BIT   5  // Uno Digital Pin 13 (NOTE: D13 can't be pulled-high input due to LED.)
+    #define SPINDLE_DIRECTION_BIT   5
   #endif
 #endif
 

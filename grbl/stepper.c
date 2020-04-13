@@ -224,8 +224,8 @@ static st_prep_t prep;
 void st_wake_up()
 {
   // Enable stepper drivers.
-  if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { STEPPERS_DISABLE_PORT |= (1<<STEPPERS_DISABLE_BIT); }
-  else { STEPPERS_DISABLE_PORT &= ~(1<<STEPPERS_DISABLE_BIT); }
+  if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { WRITE_STEPPERS_DISABLE_PORT_ON(); }
+  else { WRITE_STEPPERS_DISABLE_PORT_OFF(); }
 
   // Initialize stepper output bits to ensure first ISR call does not step.
   st.step_outbits = step_port_invert_mask;
@@ -263,8 +263,8 @@ void st_go_idle()
     pin_state = true; // Override. Disable steppers.
   }
   if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { pin_state = !pin_state; } // Apply pin invert.
-  if (pin_state) { STEPPERS_DISABLE_PORT |= (1<<STEPPERS_DISABLE_BIT); }
-  else { STEPPERS_DISABLE_PORT &= ~(1<<STEPPERS_DISABLE_BIT); }
+  if (pin_state) { WRITE_STEPPERS_DISABLE_PORT_ON(); }
+  else { WRITE_STEPPERS_DISABLE_PORT_OFF(); }
 }
 
 
@@ -321,21 +321,16 @@ ISR(TIMER1_COMPA_vect)
   if (busy) { return; } // The busy-flag is used to avoid reentering this interrupt
 
   // Set the direction pins a couple of nanoseconds before we step the steppers
-  DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | (st.dir_outbits & DIRECTION_MASK);
+  WRITE_DIRECTION_PORT(st.dir_outbits);
   #ifdef ENABLE_DUAL_AXIS
-    DIRECTION_PORT_DUAL = (DIRECTION_PORT_DUAL & ~DIRECTION_MASK_DUAL) | (st.dir_outbits_dual & DIRECTION_MASK_DUAL);
+    WRITE_DIRECTION_PORT_DUAL(st.dir_outbits_dual);
   #endif
 
   // Then pulse the stepping pins
-  #ifdef STEP_PULSE_DELAY
-    st.step_bits = (STEP_PORT & ~STEP_MASK) | st.step_outbits; // Store out_bits to prevent overwriting.
+  #ifndef STEP_PULSE_DELAY  // Normal operation
+    WRITE_STEP_PORT(st.step_outbits);
     #ifdef ENABLE_DUAL_AXIS
-      st.step_bits_dual = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
-    #endif
-  #else  // Normal operation
-    STEP_PORT = (STEP_PORT & ~STEP_MASK) | st.step_outbits;
-    #ifdef ENABLE_DUAL_AXIS
-      STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
+      WRITE_STEP_PORT_DUAL(st.step_outbits_dual);
     #endif
   #endif
 
@@ -489,9 +484,9 @@ ISR(TIMER1_COMPA_vect)
 ISR(TIMER0_OVF_vect)
 {
   // Reset stepping pins (leave the direction pins)
-  STEP_PORT = (STEP_PORT & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK);
+  WRITE_STEP_PORT(step_port_invert_mask);
   #ifdef ENABLE_DUAL_AXIS
-    STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | (step_port_invert_mask_dual & STEP_MASK_DUAL);
+    WRITE_STEP_PORT_DUAL(step_port_invert_mask_dual);
   #endif
   TCCR0B = 0; // Disable Timer0 to prevent re-entering this interrupt when it's not needed.
 }
@@ -503,9 +498,9 @@ ISR(TIMER0_OVF_vect)
   // st_wake_up() routine.
   ISR(TIMER0_COMPA_vect)
   {
-    STEP_PORT = st.step_bits; // Begin step pulse.
+    WRITE_STEP_PORT(st.step_bits); // Begin step pulse.
     #ifdef ENABLE_DUAL_AXIS
-      STEP_PORT_DUAL = st.step_bits_dual;
+      WRITE_STEP_PORT_DUAL(st.step_bits_dual);
     #endif
   }
 #endif
@@ -551,13 +546,13 @@ void st_reset()
   st.dir_outbits = dir_port_invert_mask; // Initialize direction bits to default.
 
   // Initialize step and direction port pins.
-  STEP_PORT = (STEP_PORT & ~STEP_MASK) | step_port_invert_mask;
-  DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | dir_port_invert_mask;
+  WRITE_STEP_PORT(step_port_invert_mask);
+  WRITE_DIRECTION_PORT(dir_port_invert_mask);
   
   #ifdef ENABLE_DUAL_AXIS
     st.dir_outbits_dual = dir_port_invert_mask_dual;
-    STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | step_port_invert_mask_dual;
-    DIRECTION_PORT_DUAL = (DIRECTION_PORT_DUAL & ~DIRECTION_MASK_DUAL) | dir_port_invert_mask_dual;
+    WRITE_STEP_PORT_DUAL(step_port_invert_mask_dual);
+    WRITE_DIRECTION_PORT_DUAL(dir_port_invert_mask_dual);
   #endif
 }
 
@@ -566,13 +561,13 @@ void st_reset()
 void stepper_init()
 {
   // Configure step and direction interface pins
-  STEP_DDR |= STEP_MASK;
-  STEPPERS_DISABLE_DDR |= 1<<STEPPERS_DISABLE_BIT;
-  DIRECTION_DDR |= DIRECTION_MASK;
+  SET_STEP_DDR();
+  SET_STEPPERS_DISABLE_DDR();
+  SET_DIRECTION_DDR();
   
   #ifdef ENABLE_DUAL_AXIS
-    STEP_DDR_DUAL |= STEP_MASK_DUAL;
-    DIRECTION_DDR_DUAL |= DIRECTION_MASK_DUAL;
+    SET_STEP_DDR_DUAL();
+    SET_DIRECTION_DDR_DUAL();
   #endif
 
   // Configure Timer 1: Stepper Driver Interrupt

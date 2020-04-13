@@ -26,6 +26,14 @@
 #ifndef cpu_map_h
 #define cpu_map_h
 
+// Helper macros for operations on bits
+#define IS_SET(port,bit) (((port) & (bit)) == (bit))
+#define SET_ON(port,bit) ((port) |= (bit))
+#define SET_OFF(port,bit) ((port) &= ~(bit))
+
+// Helper macros for operations on registers
+#define SET_SINGLE_DDR(axis, port, type) { SET_ON(DDR##port, INTERNAL_##axis##_##type); }
+#define WRITE_SINGLE(val, axis, port, type) { if (IS_SET(val, (1<<axis##_##type##_BIT))) SET_ON(PORT##port, INTERNAL_##axis##_##type); else SET_OFF(PORT##port, INTERNAL_##axis##_##type); }
 
 #ifdef CPU_MAP_ATMEGA328P // (Arduino Uno) Officially supported by Grbl.
 
@@ -33,27 +41,35 @@
   #define SERIAL_RX     USART_RX_vect
   #define SERIAL_UDRE   USART_UDRE_vect
 
-  // Define step pulse output pins. NOTE: All step bit pins must be on the same port.
-  #define STEP_DDR        DDRD
-  #define STEP_PORT       PORTD
-  #define X_STEP_BIT      2  // Uno Digital Pin 2
-  #define Y_STEP_BIT      3  // Uno Digital Pin 3
-  #define Z_STEP_BIT      4  // Uno Digital Pin 4
-  #define STEP_MASK       ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
+  // Define step pulse output pins.
+  #define INTERNAL_X_STEP  (1<<2)
+  #define INTERNAL_Y_STEP  (1<<3)
+  #define INTERNAL_Z_STEP  (1<<4)
+  #define X_STEP_BIT       1  // Dummy unique value
+  #define Y_STEP_BIT       2  // Dummy unique value
+  #define Z_STEP_BIT       3  // Dummy unique value
+  #define STEP_MASK        ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
 
-  // Define step direction output pins. NOTE: All direction pins must be on the same port.
-  #define DIRECTION_DDR     DDRD
-  #define DIRECTION_PORT    PORTD
-  #define X_DIRECTION_BIT   5  // Uno Digital Pin 5
-  #define Y_DIRECTION_BIT   6  // Uno Digital Pin 6
-  #define Z_DIRECTION_BIT   7  // Uno Digital Pin 7
-  #define DIRECTION_MASK    ((1<<X_DIRECTION_BIT)|(1<<Y_DIRECTION_BIT)|(1<<Z_DIRECTION_BIT)) // All direction bits
+  #define SET_STEP_DDR()   { SET_SINGLE_DDR(X, D, STEP); SET_SINGLE_DDR(Y, D, STEP); SET_SINGLE_DDR(Z, D, STEP); }
+  #define WRITE_STEP_PORT(val) { WRITE_SINGLE(val, X, D, STEP); WRITE_SINGLE(val, Y, D, STEP); WRITE_SINGLE(val, Z, D, STEP); }
+
+  // Define step direction output pins.
+  #define INTERNAL_X_DIRECTION  (1<<5)
+  #define INTERNAL_Y_DIRECTION  (1<<6)
+  #define INTERNAL_Z_DIRECTION  (1<<7)
+  #define X_DIRECTION_BIT       4  // Dummy unique value
+  #define Y_DIRECTION_BIT       5  // Dummy unique value
+  #define Z_DIRECTION_BIT       6  // Dummy unique value
+
+  #define SET_DIRECTION_DDR() { SET_SINGLE_DDR(X, D, DIRECTION); SET_SINGLE_DDR(Y, D, DIRECTION); SET_SINGLE_DDR(Z, D, DIRECTION); }
+  #define WRITE_DIRECTION_PORT(val) { WRITE_SINGLE(val, X, D, DIRECTION); WRITE_SINGLE(val, Y, D, DIRECTION); WRITE_SINGLE(val, Z, D, DIRECTION); }
 
   // Define stepper driver enable/disable output pin.
-  #define STEPPERS_DISABLE_DDR    DDRB
-  #define STEPPERS_DISABLE_PORT   PORTB
-  #define STEPPERS_DISABLE_BIT    0  // Uno Digital Pin 8
-  #define STEPPERS_DISABLE_MASK   (1<<STEPPERS_DISABLE_BIT)
+  #define INTERNAL_XYZ_ENABLE  (1<<0)
+
+  #define SET_STEPPERS_DISABLE_DDR() { SET_ON(DDRB, INTERNAL_XYZ_ENABLE); }
+  #define WRITE_STEPPERS_DISABLE_PORT_ON() { SET_ON(PORTB, INTERNAL_XYZ_ENABLE); }
+  #define WRITE_STEPPERS_DISABLE_PORT_OFF() { SET_OFF(PORTB, INTERNAL_XYZ_ENABLE); }
 
   // Define homing/hard limit switch input pins and limit interrupt vectors.
   // NOTE: All limit bit pins must be on the same port, but not on a port with other input pins (CONTROL).
@@ -159,14 +175,18 @@
 
     #ifdef DUAL_AXIS_CONFIG_PROTONEER_V3_51
       // NOTE: Step pulse and direction pins may be on any port and output pin.
-      #define STEP_DDR_DUAL       DDRC
-      #define STEP_PORT_DUAL      PORTC
-      #define DUAL_STEP_BIT       4  // Uno Analog Pin 4
+      #define INTERNAL_DUAL_STEP  (1<<4)
+      #define DUAL_STEP_BIT      1  // Dummy unique value
       #define STEP_MASK_DUAL      ((1<<DUAL_STEP_BIT))
-      #define DIRECTION_DDR_DUAL  DDRC
-      #define DIRECTION_PORT_DUAL PORTC
-      #define DUAL_DIRECTION_BIT  3  // Uno Analog Pin 3
-      #define DIRECTION_MASK_DUAL ((1<<DUAL_DIRECTION_BIT))
+
+      #define SET_STEP_DDR_DUAL() { SET_SINGLE_DDR(DUAL, C, STEP); }
+      #define WRITE_STEP_PORT_DUAL(val) { WRITE_SINGLE(val, DUAL, C, STEP); }
+
+      #define INTERNAL_DUAL_DIRECTION (1<<3)
+      #define DUAL_DIRECTION_BIT   2  // Dummy unique value
+
+      #define SET_DIRECTION_DDR_DUAL() { SET_SINGLE_DDR(DUAL, D, DIRECTION); }
+      #define WRITE_DIRECTION_PORT_DUAL(val) { WRITE_SINGLE(val, DUAL, D, DIRECTION); }
 
       // NOTE: Dual axis limit is shared with the z-axis limit pin by default. Pin used must be on the same port
       // as other limit pins.
@@ -219,14 +239,18 @@
     // NOTE: Variable spindle not supported with this shield.
     #ifdef DUAL_AXIS_CONFIG_CNC_SHIELD_CLONE
       // NOTE: Step pulse and direction pins may be on any port and output pin.
-      #define STEP_DDR_DUAL       DDRB
-      #define STEP_PORT_DUAL      PORTB
-      #define DUAL_STEP_BIT       4  // Uno Digital Pin 12
+      #define INTERNAL_DUAL_STEP  (1<<4)
+      #define DUAL_STEP_BIT      1  // Dummy unique value
       #define STEP_MASK_DUAL      ((1<<DUAL_STEP_BIT))
-      #define DIRECTION_DDR_DUAL  DDRB
-      #define DIRECTION_PORT_DUAL PORTB
-      #define DUAL_DIRECTION_BIT  5  // Uno Digital Pin 13
-      #define DIRECTION_MASK_DUAL ((1<<DUAL_DIRECTION_BIT))
+
+      #define SET_STEP_DDR_DUAL() { SET_SINGLE_DDR(DUAL, B, STEP); }
+      #define WRITE_STEP_PORT_DUAL(val) { WRITE_SINGLE(val, DUAL, B, STEP); }
+
+      #define INTERNAL_DUAL_DIRECTION (1<<5)
+      #define DUAL_DIRECTION_BIT   2  // Dummy unique value
+
+      #define SET_DIRECTION_DDR_DUAL() { SET_SINGLE_DDR(DUAL, B, DIRECTION); }
+      #define WRITE_DIRECTION_PORT_DUAL(val) { WRITE_SINGLE(val, DUAL, B, DIRECTION); }
 
       // NOTE: Dual axis limit is shared with the z-axis limit pin by default.
       #define DUAL_LIMIT_BIT    Z_LIMIT_BIT

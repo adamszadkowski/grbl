@@ -354,12 +354,12 @@
   #define PROBE_MASK      (1<<PROBE_BIT)
 
   // Define flood and mist coolant enable output pins.
-  #define COOLANT_FLOOD_DDR   DDRC
-  #define COOLANT_FLOOD_PORT  PORTC
-  #define COOLANT_FLOOD_BIT   3  // Uno Analog Pin 3
-  #define COOLANT_MIST_DDR   DDRC
-  #define COOLANT_MIST_PORT  PORTC
-  #define COOLANT_MIST_BIT   4  // Uno Analog Pin 4
+  #define COOLANT_FLOOD_DDR   DDRA
+  #define COOLANT_FLOOD_PORT  PORTA
+  #define COOLANT_FLOOD_BIT   1
+  #define COOLANT_MIST_DDR   DDRA
+  #define COOLANT_MIST_PORT  PORTA
+  #define COOLANT_MIST_BIT   2
 
   // Define spindle enable and spindle direction output pins.
   #define SPINDLE_ENABLE_DDR    DDRB
